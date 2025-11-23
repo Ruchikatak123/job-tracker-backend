@@ -1,8 +1,10 @@
 const { google } = require("googleapis");
+const path = require("path");
 
 module.exports = async (req, res) => {
   try {
     const code = req.query.code;
+    if (!code) return res.status(400).send("Missing authorization code");
 
     const oauth2Client = new google.auth.OAuth2(
       process.env.CLIENT_ID,
@@ -12,7 +14,12 @@ module.exports = async (req, res) => {
 
     const { tokens } = await oauth2Client.getToken(code);
 
-    return res.redirect(`/success.html#tokens=${encodeURIComponent(JSON.stringify(tokens))}`);
+    const successUrl = `/success.html#tokens=${encodeURIComponent(
+      JSON.stringify(tokens)
+    )}`;
+
+    return res.redirect(successUrl);
+
   } catch (err) {
     return res.status(500).send("OAuth Callback Error: " + err.message);
   }
