@@ -1,8 +1,12 @@
 {
   "version": 2,
+  "builds": [
+    { "src": "api/*.js", "use": "@vercel/node" }
+  ],
   "routes": [
     { "src": "/api/auth", "dest": "/api/auth.js" },
     { "src": "/api/oauth2callback", "dest": "/api/oauth2callback.js" },
     { "src": "/api/createSheet", "dest": "/api/createSheet.js" }
   ]
 }
+
