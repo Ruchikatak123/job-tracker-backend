@@ -5,7 +5,7 @@ module.exports = async (req, res) => {
     const oauth2Client = new google.auth.OAuth2(
       process.env.CLIENT_ID,
       process.env.CLIENT_SECRET,
-      process.env.REDIRECT_URI
+      process.env.REDIRECT_URI // MUST be /api/oauth2callback
     );
 
     const url = oauth2Client.generateAuthUrl({
