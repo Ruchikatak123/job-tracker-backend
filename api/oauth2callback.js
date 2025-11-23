@@ -1,30 +1,25 @@
-const { google } = require('googleapis');
+const express = require("express");
+const router = express.Router();
+const { google } = require("googleapis");
 
-module.exports = async (req, res) => {
+router.get("/", async (req, res) => {
   try {
+    const code = req.query.code;
+    if (!code) return res.send("Missing code");
+
     const oauth2Client = new google.auth.OAuth2(
       process.env.CLIENT_ID,
       process.env.CLIENT_SECRET,
       process.env.REDIRECT_URI
     );
 
-    const code = req.query.code;
     const { tokens } = await oauth2Client.getToken(code);
     oauth2Client.setCredentials(tokens);
 
-    // Return tokens to extension
-    return res.status(200).send(`
-      <html>
-        <body>
-          <script>
-            window.opener.postMessage(${JSON.stringify(tokens)}, "*");
-            window.close();
-          </script>
-        </body>
-      </html>
-    `);
-
+    return res.redirect("/success.html"); 
   } catch (err) {
-    return res.status(400).json({ error: err.message });
+    res.send("OAuth Error: " + err.message);
   }
-};
+});
+
+module.exports = router;
