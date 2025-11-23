@@ -1,11 +1,8 @@
-const express = require("express");
-const router = express.Router();
 const { google } = require("googleapis");
 
-router.get("/", async (req, res) => {
+module.exports = async (req, res) => {
   try {
     const code = req.query.code;
-    if (!code) return res.send("Missing code");
 
     const oauth2Client = new google.auth.OAuth2(
       process.env.CLIENT_ID,
@@ -14,12 +11,10 @@ router.get("/", async (req, res) => {
     );
 
     const { tokens } = await oauth2Client.getToken(code);
-    oauth2Client.setCredentials(tokens);
 
-    return res.redirect("/success.html"); 
+    return res.redirect(`/success.html#tokens=${encodeURIComponent(JSON.stringify(tokens))}`);
   } catch (err) {
-    res.send("OAuth Error: " + err.message);
+    return res.status(500).send("OAuth Callback Error: " + err.message);
   }
-});
+};
 
-module.exports = router;
