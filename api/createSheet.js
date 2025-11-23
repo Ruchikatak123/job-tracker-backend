@@ -1,93 +1,48 @@
-import { google } from "googleapis";
+const { google } = require('googleapis');
 
-export default async function createSheetAutomation(auth) {
-  const sheets = google.sheets({ version: "v4", auth });
-  const scriptApi = google.script({ version: "v1", auth });
+module.exports = async (req, res) => {
+  try {
+    const { access_token, refresh_token } = req.body;
 
-  //
-  // 1. CREATE NEW GOOGLE SHEET
-  //
-  const sheet = await sheets.spreadsheets.create({
-    requestBody: {
-      properties: {
-        title: "Job Tracker Sheet",
-      },
-    },
-  });
+    const oauth2Client = new google.auth.OAuth2(
+      process.env.CLIENT_ID,
+      process.env.CLIENT_SECRET,
+      process.env.REDIRECT_URI
+    );
 
-  const spreadsheetId = sheet.data.spreadsheetId;
-  console.log("Spreadsheet ID:", spreadsheetId);
+    oauth2Client.setCredentials({ access_token, refresh_token });
 
-  //
-  // 2. ADD HEADER ROW
-  //
-  await sheets.spreadsheets.values.update({
-    spreadsheetId,
-    range: "A1:F1",
-    valueInputOption: "RAW",
-    requestBody: {
-      values: [
-        ["Company", "Title", "Link", "Status", "Date", "Location"],
-      ],
-    },
-  });
+    const drive = google.drive({ version: 'v3', auth: oauth2Client });
 
-  //
-  // 3. CREATE AN APPS SCRIPT PROJECT
-  //
-  const scriptProject = await scriptApi.projects.create({
-    requestBody: {
-      title: "Job Tracker Automation Script",
-    },
-  });
+    // 1. Create sheet
+    const file = await drive.files.create({
+      requestBody: {
+        name: 'Job Applications',
+        mimeType: 'application/vnd.google-apps.spreadsheet'
+      }
+    });
 
-  const scriptId = scriptProject.data.scriptId;
+    const sheetId = file.data.id;
 
-  //
-  // 4. INJECT GOOGLE APPS SCRIPT CODE
-  //
-  const scriptCode = `
-function doPost(e) {
-  const ss = SpreadsheetApp.openById("${spreadsheetId}");
-  const sheet = ss.getSheets()[0];
-  const data = JSON.parse(e.postData.contents);
+    // 2. Add columns
+    const sheets = google.sheets({ version: 'v4', auth: oauth2Client });
 
-  sheet.appendRow([
-    data.company,
-    data.title,
-    data.link,
-    data.status,
-    data.date,
-    data.location
-  ]);
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: sheetId,
+      range: "Sheet1!A1:F1",
+      valueInputOption: "RAW",
+      requestBody: {
+        values: [["Company", "Title", "Link", "Status", "Date", "Location"]]
+      }
+    });
 
-  return ContentService.createTextOutput("success");
-}
-  `;
+    // 3. Return URL
+    return res.status(200).json({
+      sheetUrl: `https://docs.google.com/spreadsheets/d/${sheetId}/edit`,
+      sheetId
+    });
 
-  await scriptApi.projects.updateContent({
-    scriptId,
-    requestBody: {
-      files: [
-        {
-          name: "Code",
-          type: "SERVER_JS",
-          source: scriptCode,
-        },
-      ],
-    },
-  });
-
-  //
-  // 5. DEPLOY AS WEB APP
-  //
-  const deployment = await scriptApi.projects.deployments.create({
-    scriptId,
-    requestBody: {
-      versionNumber: 1,
-      deploymentConfig: {
-        webApp: {
-          executeAs: "USER_ACCESSING",
-          access: "ANYONE",
-        },
-      },
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+};
