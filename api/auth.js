@@ -1,6 +1,6 @@
 const { google } = require("googleapis");
 
-module.exports = (req, res) => {
+module.exports = async (req, res) => {
   try {
     const oauth2Client = new google.auth.OAuth2(
       process.env.CLIENT_ID,
@@ -8,18 +8,24 @@ module.exports = (req, res) => {
       process.env.REDIRECT_URI
     );
 
-    const url = oauth2Client.generateAuthUrl({
+    const scopes = [
+      "https://www.googleapis.com/auth/spreadsheets",
+      "https://www.googleapis.com/auth/drive.file",
+      "https://www.googleapis.com/auth/script.projects"
+    ];
+
+    const authUrl = oauth2Client.generateAuthUrl({
       access_type: "offline",
-      scope: [
-        "https://www.googleapis.com/auth/spreadsheets",
-        "https://www.googleapis.com/auth/drive.file",
-        "https://www.googleapis.com/auth/script.projects"
-      ],
-      prompt: "consent"
+      prompt: "consent",
+      scope: scopes,
     });
 
-    return res.status(200).json({ authUrl: url });
-  } catch (err) {
-    return res.status(500).send("Auth URL Error: " + err.message);
+    return res.json({ authUrl });
+
+  } catch (error) {
+    return res.status(500).json({
+      error: "Auth URL generation failed",
+      message: error.message,
+    });
   }
 };
