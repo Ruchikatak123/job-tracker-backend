@@ -1,16 +1,20 @@
 <!DOCTYPE html>
 <html>
+<head>
+  <title>Success</title>
+</head>
 <body>
-<script>
+  <script>
     const hash = window.location.hash.substring(1);
     const params = new URLSearchParams(hash);
-    const data = params.get("tokens");
+    const tokens = params.get("tokens");
 
     chrome.runtime.sendMessage(
-        { type: "WEBAPP_URL", url: data },
-        () => window.close()
+      { type: "WEBAPP_URL", url: tokens },
+      () => window.close()
     );
-</script>
-<p>Success! You can close this window.</p>
+  </script>
+
+  <p>Authentication successful. You can close this window.</p>
 </body>
 </html>
