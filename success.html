@@ -1,52 +1,16 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Success</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      margin-top: 80px;
-    }
-    .box {
-      max-width: 450px;
-      margin: auto;
-      padding: 20px;
-      border-radius: 12px;
-      background: #f9f9f9;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.1);
-    }
-    h2 { color: #4CAF50; }
-    code { background: #eee; padding: 4px 6px; border-radius: 6px; }
-  </style>
-</head>
+<html>
 <body>
+<script>
+    const hash = window.location.hash.substring(1);
+    const params = new URLSearchParams(hash);
+    const data = params.get("tokens");
 
-  <div class="box">
-    <h2>🎉 Setup Completed</h2>
-    <p>Your sheet has been created successfully!</p>
-    <p>Your Web App URL:</p>
-
-    <p id="url" style="font-weight:bold; word-break: break-all;"></p>
-
-    <p>
-      You can close this tab now.<br>
-      Your Chrome extension already received the URL.
-    </p>
-  </div>
-
-  <script>
-    const params = new URLSearchParams(window.location.search);
-    const webAppUrl = params.get("webAppUrl");
-    document.getElementById("url").textContent = webAppUrl;
-
-    // SEND TO EXTENSION
-    chrome?.runtime?.sendMessage({
-      type: "WEBAPP_URL",
-      url: webAppUrl
-    });
-  </script>
-
+    chrome.runtime.sendMessage(
+        { type: "WEBAPP_URL", url: data },
+        () => window.close()
+    );
+</script>
+<p>Success! You can close this window.</p>
 </body>
 </html>
